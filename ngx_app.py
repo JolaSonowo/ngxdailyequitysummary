@@ -43,7 +43,7 @@ def get_ngx_api_data(endpoint):
         return pd.DataFrame()
 
 # 3. HEADER & LIVE CLOCK PLACEHOLDER
-st.title("🇳🇬 NGX Live Market Dashboard")
+st.title("NGX Daily Equity Summary")
 
 # We create an empty container that we will fill with the clock later
 clock_placeholder = st.empty()
@@ -56,14 +56,14 @@ gainers_df = get_ngx_api_data("topsymbols")
 losers_df = get_ngx_api_data("bottomsymbols")
 
 with col1:
-    st.success("### 📈 Top Gainers")
+    st.success("###Top 5 Advancers")
     if not gainers_df.empty:
         st.dataframe(gainers_df, use_container_width=True, hide_index=True)
     else:
         st.warning("No gainers data available currently.")
 
 with col2:
-    st.error("### 📉 Top Losers")
+    st.error("###Top 5 Decliners")
     if not losers_df.empty:
         st.dataframe(losers_df, use_container_width=True, hide_index=True)
     else:
@@ -71,7 +71,7 @@ with col2:
 
 # 5. DOWNLOAD SECTION
 st.divider()
-st.subheader("📁 Export Reports")
+st.subheader("Export Reports")
 
 btn_col1, btn_col2 = st.columns(2)
 
@@ -88,7 +88,7 @@ if not gainers_df.empty or not losers_df.empty:
     
     with btn_col1:
         st.download_button(
-            label="📊 Download Excel Report",
+            label="Download Excel Report",
             data=excel_bio.getvalue(),
             file_name=f"NGX_Report_{get_wat_time().strftime('%Y-%m-%d')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -129,7 +129,7 @@ if not gainers_df.empty or not losers_df.empty:
     
     with btn_col2:
         st.download_button(
-            label="📝 Download Word Report",
+            label="Download Word Report",
             data=word_bio.getvalue(),
             file_name=f"NGX_Report_{current_wat.strftime('%Y-%m-%d')}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -141,6 +141,6 @@ if not gainers_df.empty or not losers_df.empty:
 while True:
     now = get_wat_time()
     clock_placeholder.markdown(
-        f"📅 Date: **{now.strftime('%d %b %Y')}** | 🕒 Time: **{now.strftime('%I:%M:%S %p')} WAT**"
+        f" **{now.strftime('%d %b %Y')}** | **{now.strftime('%I:%M:%S %p')} WAT**"
     )
     time.sleep(1)
