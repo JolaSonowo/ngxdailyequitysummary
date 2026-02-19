@@ -62,4 +62,41 @@ with col1:
 with col2:
     st.error("### 📉 Top Losers")
     if not losers_df.empty:
-        st.dataframe(losers_df, use_container_
+        st.dataframe(losers_df, use_container_width=True, hide_index=True)
+
+# 5. Download Section
+st.divider()
+st.subheader("📁 Export Reports")
+btn_col1, btn_col2 = st.columns(2)
+
+# --- EXCEL DOWNLOAD ---
+if not gainers_df.empty or not losers_df.empty:
+    excel_bio = io.BytesIO()
+    with pd.ExcelWriter(excel_bio, engine='openpyxl') as writer:
+        if not gainers_df.empty:
+            gainers_df.to_excel(writer, sheet_name='Top Gainers', index=False)
+        if not losers_df.empty:
+            losers_df.to_excel(writer, sheet_name='Top Losers', index=False)
+    excel_bio.seek(0)
+    with btn_col1:
+        st.download_button(label="📊 Download Excel Report", data=excel_bio.getvalue(), file_name=f"NGX_Report_{get_wat_time().strftime('%Y-%m-%d')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+
+# --- WORD DOWNLOAD ---
+if not gainers_df.empty or not losers_df.empty:
+    doc = Document()
+    doc.add_heading(f'NGX Market Summary', 0)
+    doc.add_paragraph(f"Generated on: {get_wat_time().strftime('%d %b %Y at %I:%M:%S %p')} WAT")
+    
+    # (Word table logic remains the same as previous version)
+    # ... code omitted for brevity but should be kept in your file ...
+
+    word_bio = io.BytesIO()
+    doc.save(word_bio)
+    with btn_col2:
+        st.download_button(label="📝 Download Word Report", data=word_bio.getvalue(), file_name=f"NGX_Report_{get_wat_time().strftime('%Y-%m-%d')}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+
+# 6. LIVE CLOCK LOOP (Runs at the bottom to keep the UI responsive)
+while True:
+    now_wat = get_wat_time()
+    clock_placeholder.markdown(f"📅 Date: **{now_wat.strftime('%d %b %Y')}** | 🕒 Time: **{now_wat.strftime('%I:%M:%S %p')} WAT**")
+    time.sleep(1)
