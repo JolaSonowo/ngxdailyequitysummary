@@ -12,12 +12,13 @@ st.set_page_config(page_title="NGX Market Dashboard", layout="wide")
 
 # --- TIMEZONE LOGIC ---
 def get_wat_time():
+    """Returns the current time in West Africa Time (Lagos)"""
     utc_now = datetime.datetime.now(datetime.timezone.utc)
     wat_tz = pytz.timezone('Africa/Lagos')
     return utc_now.astimezone(wat_tz)
 
-# 2. DATA FETCHING (Cached to prevent hitting the API every second)
-@st.cache_data(ttl=60) # Updates data every 60 seconds
+# 2. DATA FETCHING (Cached for 60 seconds)
+@st.cache_data(ttl=60)
 def get_ngx_api_data(endpoint):
     url = f"https://doclib.ngxgroup.com/REST/api/mrkstat/{endpoint}"
     headers = {"User-Agent": "Mozilla/5.0", "Referer": "https://ngxgroup.com/"}
@@ -41,16 +42,16 @@ def get_ngx_api_data(endpoint):
     except:
         return pd.DataFrame()
 
-# 3. HEADER & LIVE CLOCK
+# 3. HEADER & LIVE CLOCK PLACEHOLDER
 st.title("🇳🇬 NGX Live Market Dashboard")
 
-# Create a placeholder for the live clock
+# We create an empty container that we will fill with the clock later
 clock_placeholder = st.empty()
 
-# 4. Main Content - Side by Side Tables
+# 4. MAIN DASHBOARD CONTENT
 col1, col2 = st.columns(2)
 
-# Load data once per run
+# Get the data (this is cached, so it's fast)
 gainers_df = get_ngx_api_data("topsymbols")
 losers_df = get_ngx_api_data("bottomsymbols")
 
@@ -58,18 +59,23 @@ with col1:
     st.success("### 📈 Top Gainers")
     if not gainers_df.empty:
         st.dataframe(gainers_df, use_container_width=True, hide_index=True)
+    else:
+        st.warning("No gainers data available currently.")
 
 with col2:
     st.error("### 📉 Top Losers")
     if not losers_df.empty:
         st.dataframe(losers_df, use_container_width=True, hide_index=True)
+    else:
+        st.warning("No losers data available currently.")
 
-# 5. Download Section
+# 5. DOWNLOAD SECTION
 st.divider()
 st.subheader("📁 Export Reports")
+
 btn_col1, btn_col2 = st.columns(2)
 
-# --- EXCEL DOWNLOAD ---
+# --- EXCEL DOWNLOAD LOGIC ---
 if not gainers_df.empty or not losers_df.empty:
     excel_bio = io.BytesIO()
     with pd.ExcelWriter(excel_bio, engine='openpyxl') as writer:
@@ -77,26 +83,64 @@ if not gainers_df.empty or not losers_df.empty:
             gainers_df.to_excel(writer, sheet_name='Top Gainers', index=False)
         if not losers_df.empty:
             losers_df.to_excel(writer, sheet_name='Top Losers', index=False)
+    
     excel_bio.seek(0)
+    
     with btn_col1:
-        st.download_button(label="📊 Download Excel Report", data=excel_bio.getvalue(), file_name=f"NGX_Report_{get_wat_time().strftime('%Y-%m-%d')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+        st.download_button(
+            label="📊 Download Excel Report",
+            data=excel_bio.getvalue(),
+            file_name=f"NGX_Report_{get_wat_time().strftime('%Y-%m-%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True
+        )
 
-# --- WORD DOWNLOAD ---
+# --- WORD DOWNLOAD LOGIC ---
 if not gainers_df.empty or not losers_df.empty:
     doc = Document()
+    current_wat = get_wat_time()
     doc.add_heading(f'NGX Market Summary', 0)
-    doc.add_paragraph(f"Generated on: {get_wat_time().strftime('%d %b %Y at %I:%M:%S %p')} WAT")
+    doc.add_paragraph(f"Generated on: {current_wat.strftime('%d %b %Y at %I:%M:%S %p')} WAT")
     
-    # (Word table logic remains the same as previous version)
-    # ... code omitted for brevity but should be kept in your file ...
+    if not gainers_df.empty:
+        doc.add_heading('Top Gainers', level=1)
+        table = doc.add_table(rows=1, cols=len(gainers_df.columns))
+        table.style = 'Table Grid'
+        for i, column in enumerate(gainers_df.columns):
+            table.rows[0].cells[i].text = column
+        for _, row in gainers_df.iterrows():
+            row_cells = table.add_row().cells
+            for i, value in enumerate(row):
+                row_cells[i].text = str(value)
+
+    if not losers_df.empty:
+        doc.add_heading('Top Losers', level=1)
+        table_l = doc.add_table(rows=1, cols=len(losers_df.columns))
+        table_l.style = 'Table Grid'
+        for i, column in enumerate(losers_df.columns):
+            table_l.rows[0].cells[i].text = column
+        for _, row in losers_df.iterrows():
+            row_cells = table_l.add_row().cells
+            for i, value in enumerate(row):
+                row_cells[i].text = str(value)
 
     word_bio = io.BytesIO()
     doc.save(word_bio)
+    
     with btn_col2:
-        st.download_button(label="📝 Download Word Report", data=word_bio.getvalue(), file_name=f"NGX_Report_{get_wat_time().strftime('%Y-%m-%d')}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+        st.download_button(
+            label="📝 Download Word Report",
+            data=word_bio.getvalue(),
+            file_name=f"NGX_Report_{current_wat.strftime('%Y-%m-%d')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True
+        )
 
-# 6. LIVE CLOCK LOOP (Runs at the bottom to keep the UI responsive)
+# 6. LIVE CLOCK (Runs at the very end)
+# This loop updates only the placeholder we created at the top
 while True:
-    now_wat = get_wat_time()
-    clock_placeholder.markdown(f"📅 Date: **{now_wat.strftime('%d %b %Y')}** | 🕒 Time: **{now_wat.strftime('%I:%M:%S %p')} WAT**")
+    now = get_wat_time()
+    clock_placeholder.markdown(
+        f"📅 Date: **{now.strftime('%d %b %Y')}** | 🕒 Time: **{now.strftime('%I:%M:%S %p')} WAT**"
+    )
     time.sleep(1)
