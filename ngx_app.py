@@ -17,7 +17,7 @@ def get_wat_time():
     wat_tz = pytz.timezone('Africa/Lagos')
     return utc_now.astimezone(wat_tz)
 
-# 2. DATA FETCHING (Cached for 60 seconds)
+# 2. DATA FETCHING 
 @st.cache_data(ttl=60)
 def get_ngx_api_data(endpoint):
     url = f"https://doclib.ngxgroup.com/REST/api/mrkstat/{endpoint}"
@@ -45,13 +45,12 @@ def get_ngx_api_data(endpoint):
 # 3. HEADER & LIVE CLOCK PLACEHOLDER
 st.title("NGX Daily Equity Summary")
 
-# We create an empty container that we will fill with the clock later
 clock_placeholder = st.empty()
 
 # 4. MAIN DASHBOARD CONTENT
 col1, col2 = st.columns(2)
 
-# Get the data (this is cached, so it's fast)
+
 gainers_df = get_ngx_api_data("topsymbols")
 losers_df = get_ngx_api_data("bottomsymbols")
 
@@ -136,8 +135,7 @@ if not gainers_df.empty or not losers_df.empty:
             use_container_width=True
         )
 
-# 6. LIVE CLOCK (Runs at the very end)
-# This loop updates only the placeholder we created at the top
+# 6. LIVE CLOCK 
 while True:
     now = get_wat_time()
     clock_placeholder.markdown(
