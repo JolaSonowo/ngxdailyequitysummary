@@ -1,4 +1,4 @@
-## NGX Live Equity Summary Cloud Version
+## NGX Live Equity Summary 
 This is a professional real-time dashboard that tracks the Top 5 Advancers and Decliners on the Nigerian Exchange Group (NGX). 
 
 It is hosted on Streamlit Cloud for global access.
