@@ -20,3 +20,5 @@ Auto-Update: Data is cached and refreshed every 60 seconds to ensure accuracy wi
 
 ## Dependencies
 `streamlit`, `pandas`, `requests`, `python-docx`, `openpyxl`, `pytz`
+
+https://ngxsummary.streamlit.app
