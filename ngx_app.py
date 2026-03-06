@@ -222,9 +222,7 @@ if not gainers_df.empty or not losers_df.empty:
             data=word_bio.getvalue(),
             file_name=f"NGX_Report_{current_wat.strftime('%Y-%m-%d')}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            use_container_width=True
-        )
-
+            use_container_width=True)
 # 6. LIVE CLOCK 
 while True:
     now = get_wat_time()
