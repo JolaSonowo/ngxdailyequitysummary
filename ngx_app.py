@@ -178,7 +178,7 @@ if not gainers_df.empty or not losers_df.empty:
             vals = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
             for i, val in enumerate(vals):
                 row_cells[i].text = str(val)
-                set_cell_background(row_cells[i], "93C47D")
+                set_cell_background(row_cells[i], "8EB77D")
                 set_cell_padding(row_cells[i], top=100, bottom=100)
                 apply_table_font(row_cells[i], "Aptos", 11)
 
@@ -209,7 +209,7 @@ if not gainers_df.empty or not losers_df.empty:
             vals = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
             for i, val in enumerate(vals):
                 row_cells[i].text = str(val)
-                set_cell_background(row_cells[i], "E06666")
+                set_cell_background(row_cells[i], "EB5952")
                 set_cell_padding(row_cells[i], top=100, bottom=100)
                 apply_table_font(row_cells[i], "Aptos", 11)
 
@@ -224,7 +224,6 @@ if not gainers_df.empty or not losers_df.empty:
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True
         )
-
 
 # 6. LIVE CLOCK 
 while True:
