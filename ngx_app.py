@@ -4,8 +4,9 @@ import requests
 import pandas as pd
 import io
 import pytz
-import time
 from docx import Document
+
+TOP_N = 7
 
 # 1. Page Configuration
 st.set_page_config(page_title="NGX Market Dashboard", layout="wide")
@@ -14,55 +15,63 @@ st.set_page_config(page_title="NGX Market Dashboard", layout="wide")
 def get_wat_time():
     """Returns the current time in West Africa Time (Lagos)"""
     utc_now = datetime.datetime.now(datetime.timezone.utc)
-    wat_tz = pytz.timezone('Africa/Lagos')
+    wat_tz = pytz.timezone("Africa/Lagos")
     return utc_now.astimezone(wat_tz)
 
-# 2. DATA FETCHING 
+# 2. DATA FETCHING
 @st.cache_data(ttl=60)
 def get_ngx_api_data(endpoint):
     url = f"https://doclib.ngxgroup.com/REST/api/mrkstat/{endpoint}"
-    headers = {"User-Agent": "Mozilla/5.0", "Referer": "https://ngxgroup.com/"}
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://ngxgroup.com/"
+    }
+
     try:
         response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         data = response.json()
+
         output = []
-        for item in data[:7]:
-            last_close = float(item.get('LAST_CLOSE', 0))
-            price_change = float(item.get('PERCENTAGE_CHANGE', 0))
-            todays_close = float(item.get('TODAYS_CLOSE', 0))
-            pc_val = (price_change / last_close * 100) if last_close != 0 else 0
-            
+        for item in data[:TOP_N]:
+            last_close = float(item.get("LAST_CLOSE", 0) or 0)
+            percentage_change = float(item.get("PERCENTAGE_CHANGE", 0) or 0)
+            todays_close = float(item.get("TODAYS_CLOSE", 0) or 0)
+
             output.append({
-                "Symbol": item.get('SYMBOL', 'N/A'),
+                "Symbol": item.get("SYMBOL", "N/A"),
                 "Price": todays_close,
-                "Change (N)": price_change,
-                "% Change": round(pc_val, 2)
+                "Change (N)": percentage_change,
+                "% Change": round((percentage_change / last_close * 100), 2) if last_close != 0 else 0
             })
+
         return pd.DataFrame(output)
-    except:
+
+    except Exception as e:
+        st.error(f"Error fetching {endpoint}: {e}")
         return pd.DataFrame()
 
-# 3. HEADER & LIVE CLOCK PLACEHOLDER
+# 3. HEADER & CLOCK
 st.title("NGX Daily Equity Summary")
 
-clock_placeholder = st.empty()
+now = get_wat_time()
+st.markdown(f"**{now.strftime('%d %b %Y')}** | **{now.strftime('%I:%M:%S %p')} WAT**")
 
 # 4. MAIN DASHBOARD CONTENT
 col1, col2 = st.columns(2)
-
 
 gainers_df = get_ngx_api_data("topsymbols")
 losers_df = get_ngx_api_data("bottomsymbols")
 
 with col1:
-    st.success("**Top 7 Advancers**")
+    st.success(f"**Top {TOP_N} Advancers**")
     if not gainers_df.empty:
         st.dataframe(gainers_df, use_container_width=True, hide_index=True)
     else:
         st.warning("No gainers data available currently.")
 
 with col2:
-    st.error("**Top 7 Decliners**")
+    st.error(f"**Top {TOP_N} Decliners**")
     if not losers_df.empty:
         st.dataframe(losers_df, use_container_width=True, hide_index=True)
     else:
@@ -74,17 +83,17 @@ st.subheader("Export Reports")
 
 btn_col1, btn_col2 = st.columns(2)
 
-# --- EXCEL DOWNLOAD LOGIC ---
 if not gainers_df.empty or not losers_df.empty:
+    # Excel download
     excel_bio = io.BytesIO()
-    with pd.ExcelWriter(excel_bio, engine='openpyxl') as writer:
+    with pd.ExcelWriter(excel_bio, engine="openpyxl") as writer:
         if not gainers_df.empty:
-            gainers_df.to_excel(writer, sheet_name='Top Gainers', index=False)
+            gainers_df.to_excel(writer, sheet_name="Top Gainers", index=False)
         if not losers_df.empty:
-            losers_df.to_excel(writer, sheet_name='Top Losers', index=False)
-    
+            losers_df.to_excel(writer, sheet_name="Top Losers", index=False)
+
     excel_bio.seek(0)
-    
+
     with btn_col1:
         st.download_button(
             label="Download Excel Report",
@@ -94,30 +103,33 @@ if not gainers_df.empty or not losers_df.empty:
             use_container_width=True
         )
 
-# --- WORD DOWNLOAD LOGIC ---
-if not gainers_df.empty or not losers_df.empty:
+    # Word download
     doc = Document()
     current_wat = get_wat_time()
-    doc.add_heading(f'NGX Market Summary', 0)
+    doc.add_heading("NGX Market Summary", 0)
     doc.add_paragraph(f"Generated on: {current_wat.strftime('%d %b %Y at %I:%M:%S %p')} WAT")
-    
+
     if not gainers_df.empty:
-        doc.add_heading('Top Gainers', level=1)
+        doc.add_heading(f"Top {TOP_N} Gainers", level=1)
         table = doc.add_table(rows=1, cols=len(gainers_df.columns))
-        table.style = 'Table Grid'
+        table.style = "Table Grid"
+
         for i, column in enumerate(gainers_df.columns):
-            table.rows[0].cells[i].text = column
+            table.rows[0].cells[i].text = str(column)
+
         for _, row in gainers_df.iterrows():
             row_cells = table.add_row().cells
             for i, value in enumerate(row):
                 row_cells[i].text = str(value)
 
     if not losers_df.empty:
-        doc.add_heading('Top Losers', level=1)
+        doc.add_heading(f"Top {TOP_N} Losers", level=1)
         table_l = doc.add_table(rows=1, cols=len(losers_df.columns))
-        table_l.style = 'Table Grid'
+        table_l.style = "Table Grid"
+
         for i, column in enumerate(losers_df.columns):
-            table_l.rows[0].cells[i].text = column
+            table_l.rows[0].cells[i].text = str(column)
+
         for _, row in losers_df.iterrows():
             row_cells = table_l.add_row().cells
             for i, value in enumerate(row):
@@ -125,7 +137,8 @@ if not gainers_df.empty or not losers_df.empty:
 
     word_bio = io.BytesIO()
     doc.save(word_bio)
-    
+    word_bio.seek(0)
+
     with btn_col2:
         st.download_button(
             label="Download Word Report",
@@ -134,11 +147,3 @@ if not gainers_df.empty or not losers_df.empty:
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True
         )
-
-# 6. LIVE CLOCK 
-while True:
-    now = get_wat_time()
-    clock_placeholder.markdown(
-        f" **{now.strftime('%d %b %Y')}** | **{now.strftime('%I:%M:%S %p')} WAT**"
-    )
-    time.sleep(1)
