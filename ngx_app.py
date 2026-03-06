@@ -95,34 +95,74 @@ if not gainers_df.empty or not losers_df.empty:
         )
 
 # --- WORD DOWNLOAD LOGIC ---
+from docx.shared import RGBColor, Pt
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+
+# Helper function to set cell background color
+def set_cell_background(cell, fill_color):
+    shading_elm = OxmlElement('w:shd')
+    shading_elm.set(qn('w:fill'), fill_color)
+    cell._tc.get_or_add_tcPr().append(shading_elm)
+
+# --- UPDATED WORD DOWNLOAD LOGIC ---
 if not gainers_df.empty or not losers_df.empty:
     doc = Document()
     current_wat = get_wat_time()
-    doc.add_heading(f'NGX Market Summary', 0)
-    doc.add_paragraph(f"Generated on: {current_wat.strftime('%d %b %Y at %I:%M:%S %p')} WAT")
     
+    # 1. Custom Header
+    doc.add_heading('NGX Market Summary', 0)
+    doc.add_paragraph(f"Report Date: {current_wat.strftime('%d %b %Y at %I:%M:%S %p')} WAT")
+
+    # 2. GAINERS SECTION (Green)
     if not gainers_df.empty:
         doc.add_heading('Top Gainers', level=1)
-        table = doc.add_table(rows=1, cols=len(gainers_df.columns))
+        # Match image columns: Symbol, Close Price, % Change, Naira Change
+        cols = ["Gainers", "Close Price", "% Change", "Naira Change"]
+        table = doc.add_table(rows=1, cols=4)
         table.style = 'Table Grid'
-        for i, column in enumerate(gainers_df.columns):
-            table.rows[0].cells[i].text = column
+        
+        # Format Header Row (Green)
+        hdr_cells = table.rows[0].cells
+        for i, text in enumerate(cols):
+            hdr_cells[i].text = text
+            set_cell_background(hdr_cells[i], "93C47D") # Light Green
+            hdr_cells[i].paragraphs[0].runs[0].bold = True
+
+        # Add Data Rows (Light Green)
         for _, row in gainers_df.iterrows():
             row_cells = table.add_row().cells
-            for i, value in enumerate(row):
-                row_cells[i].text = str(value)
+            # Map dataframe values to specific columns
+            values = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
+            for i, val in enumerate(values):
+                row_cells[i].text = str(val)
+                set_cell_background(row_cells[i], "A9D08E") # Slightly lighter green
 
+    doc.add_paragraph("\n") # Spacer
+
+    # 3. LOSERS SECTION (Red)
     if not losers_df.empty:
         doc.add_heading('Top Losers', level=1)
-        table_l = doc.add_table(rows=1, cols=len(losers_df.columns))
+        cols_l = ["Losers", "Close Price", "% Change", "Naira Change"]
+        table_l = doc.add_table(rows=1, cols=4)
         table_l.style = 'Table Grid'
-        for i, column in enumerate(losers_df.columns):
-            table_l.rows[0].cells[i].text = column
+        
+        # Format Header Row (Red)
+        hdr_cells_l = table_l.rows[0].cells
+        for i, text in enumerate(cols_l):
+            hdr_cells_l[i].text = text
+            set_cell_background(hdr_cells_l[i], "E06666") # Muted Red
+            hdr_cells_l[i].paragraphs[0].runs[0].bold = True
+
+        # Add Data Rows (Light Red)
         for _, row in losers_df.iterrows():
             row_cells = table_l.add_row().cells
-            for i, value in enumerate(row):
-                row_cells[i].text = str(value)
+            values = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
+            for i, val in enumerate(values):
+                row_cells[i].text = str(val)
+                set_cell_background(row_cells[i], "F4CCCC") # Light Pink/Red
 
+    # Save to buffer
     word_bio = io.BytesIO()
     doc.save(word_bio)
     
