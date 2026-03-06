@@ -208,6 +208,18 @@ if not gainers_df.empty or not losers_df.empty:
                 set_cell_background(row_cells[i], "843C39")
                 apply_table_font(row_cells[i], "Aptos", 11)
                 
+ word_bio = io.BytesIO()
+    doc.save(word_bio)
+    
+    with btn_col2:
+        st.download_button(
+            label="Download Word Report",
+            data=word_bio.getvalue(),
+            file_name=f"NGX_Report_{current_wat.strftime('%Y-%m-%d')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True
+        )
+
 
 # 6. LIVE CLOCK 
 while True:
