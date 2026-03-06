@@ -8,17 +8,13 @@ from docx import Document
 
 TOP_N = 7
 
-# 1. Page Configuration
 st.set_page_config(page_title="NGX Market Dashboard", layout="wide")
 
-# --- TIMEZONE LOGIC ---
 def get_wat_time():
-    """Returns the current time in West Africa Time (Lagos)"""
     utc_now = datetime.datetime.now(datetime.timezone.utc)
     wat_tz = pytz.timezone("Africa/Lagos")
     return utc_now.astimezone(wat_tz)
 
-# 2. DATA FETCHING
 @st.cache_data(ttl=60)
 def get_ngx_api_data(endpoint):
     url = f"https://doclib.ngxgroup.com/REST/api/mrkstat/{endpoint}"
@@ -27,14 +23,49 @@ def get_ngx_api_data(endpoint):
         "Referer": "https://ngxgroup.com/"
     }
 
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        data = response.json()
+    response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+    data = response.json()
 
-        output = []
-        for item in data[:TOP_N]:
-            last_close = float(item.get("LAST_CLOSE", 0) or 0)
+    return data
+
+st.title("NGX Daily Equity Summary")
+now = get_wat_time()
+st.markdown(f"**{now.strftime('%d %b %Y')}** | **{now.strftime('%I:%M:%S %p')} WAT**")
+
+raw_gainers = get_ngx_api_data("topsymbols")
+raw_losers = get_ngx_api_data("bottomsymbols")
+
+st.write("Gainers rows returned by API:", len(raw_gainers))
+st.write("Losers rows returned by API:", len(raw_losers))
+
+def format_data(data):
+    output = []
+    for item in data[:TOP_N]:
+        last_close = float(item.get("LAST_CLOSE", 0) or 0)
+        percentage_change = float(item.get("PERCENTAGE_CHANGE", 0) or 0)
+        todays_close = float(item.get("TODAYS_CLOSE", 0) or 0)
+
+        output.append({
+            "Symbol": item.get("SYMBOL", "N/A"),
+            "Price": todays_close,
+            "Change (N)": percentage_change,
+            "% Change": round((percentage_change / last_close * 100), 2) if last_close != 0 else 0
+        })
+    return pd.DataFrame(output)
+
+gainers_df = format_data(raw_gainers)
+losers_df = format_data(raw_losers)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.success(f"**Top {TOP_N} Advancers**")
+    st.dataframe(gainers_df, use_container_width=True, hide_index=True)
+
+with col2:
+    st.error(f"**Top {TOP_N} Decliners**")
+    st.dataframe(losers_df, use_container_width=True, hide_index=True)            last_close = float(item.get("LAST_CLOSE", 0) or 0)
             percentage_change = float(item.get("PERCENTAGE_CHANGE", 0) or 0)
             todays_close = float(item.get("TODAYS_CLOSE", 0) or 0)
 
