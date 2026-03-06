@@ -67,8 +67,8 @@ with col2:
     st.error(f"**Top {TOP_N} Decliners**")
     st.dataframe(losers_df, use_container_width=True, hide_index=True)            
     last_close = float(item.get("LAST_CLOSE", 0) or 0)
-            percentage_change = float(item.get("PERCENTAGE_CHANGE", 0) or 0)
-            todays_close = float(item.get("TODAYS_CLOSE", 0) or 0)
+        percentage_change = float(item.get("PERCENTAGE_CHANGE", 0) or 0)
+        todays_close = float(item.get("TODAYS_CLOSE", 0) or 0)
 
             output.append({
                 "Symbol": item.get("SYMBOL", "N/A"),
