@@ -120,7 +120,7 @@ if not gainers_final.empty or not losers_final.empty:
                 "% Change": round(pc_val, 2)
             })
         return pd.DataFrame(output)
-    except Exception:
+except Exception:
         return pd.DataFrame()
 
 # 3. HEADER
