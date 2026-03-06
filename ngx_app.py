@@ -127,7 +127,7 @@ if not gainers_df.empty or not losers_df.empty:
     # 1. Main Document Header: Calibri 12, Black
     title = doc.add_heading('NGX Market Summary', 0)
     title.runs[0].font.name = 'Calibri'
-    title.runs[0].font.size = Pt(12)
+    title.runs[0].font.size = Pt(13)
     title.runs[0].font.color.rgb = RGBColor(0, 0, 0)
 
     doc.add_paragraph(f"Report Date: {current_wat.strftime('%d %b %Y at %I:%M:%S %p %Z')}")
@@ -137,7 +137,7 @@ if not gainers_df.empty or not losers_df.empty:
         g_head = doc.add_heading('Top Gainers', level=1)
         g_run = g_head.runs[0]
         g_run.font.name = 'Calibri'
-        g_run.font.size = Pt(12)
+        g_run.font.size = Pt(13)
         g_run.font.color.rgb = RGBColor(255, 255, 255) # White Heading
 
         table = doc.add_table(rows=1, cols=4)
@@ -149,7 +149,7 @@ if not gainers_df.empty or not losers_df.empty:
             cell = table.rows[0].cells[i]
             cell.text = text
             set_cell_background(cell, "93C47D") # Muted Green from image
-            apply_table_font(cell, "Calibri", 11, is_bold=True)
+            apply_table_font(cell, "Calibri", 12, is_bold=True)
 
         # Body Rows: Aptos 11, Lighter Green
         for _, row in gainers_df.iterrows():
@@ -167,7 +167,7 @@ if not gainers_df.empty or not losers_df.empty:
         l_head = doc.add_heading('Top Losers', level=1)
         l_run = l_head.runs[0]
         l_run.font.name = 'Calibri'
-        l_run.font.size = Pt(12)
+        l_run.font.size = Pt(13)
         l_run.font.color.rgb = RGBColor(255, 255, 255) # White Heading
         
         table_l = doc.add_table(rows=1, cols=4)
@@ -179,7 +179,7 @@ if not gainers_df.empty or not losers_df.empty:
             cell = table_l.rows[0].cells[i]
             cell.text = text
             set_cell_background(cell, "E06666") # Coral Red from image
-            apply_table_font(cell, "Calibri", 11, is_bold=True)
+            apply_table_font(cell, "Calibri", 12, is_bold=True)
 
         # Body Rows: Aptos 11, Lighter Red
         for _, row in losers_df.iterrows():
