@@ -113,7 +113,7 @@ def apply_table_font(cell, font_name, size, is_bold=False):
             run.font.name = font_name
             run.font.size = Pt(size)
             run.bold = is_bold
-            run.font.color.rgb = RGBColor(255, 255, 255) # Force White Text
+            run.font.color.rgb = RGBColor(0,0,0) # Force White Text
             # Mandatory XML fix for Word to honor font names
             r = run._element
             r.rPr.rFonts.set(qn('w:ascii'), font_name)
@@ -138,7 +138,7 @@ if not gainers_df.empty or not losers_df.empty:
         g_run = g_head.runs[0]
         g_run.font.name = 'Calibri'
         g_run.font.size = Pt(13)
-        g_run.font.color.rgb = RGBColor(255, 255, 255) # White Heading
+        g_run.font.color.rgb = RGBColor(0,0,0) # White Heading
 
         table = doc.add_table(rows=1, cols=4)
         table.style = 'Table Grid'
@@ -168,7 +168,7 @@ if not gainers_df.empty or not losers_df.empty:
         l_run = l_head.runs[0]
         l_run.font.name = 'Calibri'
         l_run.font.size = Pt(13)
-        l_run.font.color.rgb = RGBColor(255, 255, 255) # White Heading
+        l_run.font.color.rgb = RGBColor(0,0,0) # White Heading
         
         table_l = doc.add_table(rows=1, cols=4)
         table_l.style = 'Table Grid'
