@@ -26,7 +26,7 @@ def get_ngx_api_data(endpoint):
         response = requests.get(url, headers=headers, timeout=10)
         data = response.json()
         output = []
-        for item in data[:5]:
+        for item in data[:7]:
             last_close = float(item.get('LAST_CLOSE', 0))
             price_change = float(item.get('PERCENTAGE_CHANGE', 0))
             todays_close = float(item.get('TODAYS_CLOSE', 0))
@@ -55,14 +55,14 @@ gainers_df = get_ngx_api_data("topsymbols")
 losers_df = get_ngx_api_data("bottomsymbols")
 
 with col1:
-    st.success("**Top 5 Advancers**")
+    st.success("**Top 7 Advancers**")
     if not gainers_df.empty:
         st.dataframe(gainers_df, use_container_width=True, hide_index=True)
     else:
         st.warning("No gainers data available currently.")
 
 with col2:
-    st.error("**Top 5 Decliners**")
+    st.error("**Top 7 Decliners**")
     if not losers_df.empty:
         st.dataframe(losers_df, use_container_width=True, hide_index=True)
     else:
