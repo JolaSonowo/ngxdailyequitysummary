@@ -168,7 +168,7 @@ if not gainers_df.empty or not losers_df.empty:
         for i, text in enumerate(cols):
             cell = table.rows[0].cells[i]
             cell.text = text
-            set_cell_background(cell, "93C47D") # Muted Green
+            set_cell_background(cell, "8EB77D") # Muted Green
             set_cell_padding(cell, top=140, bottom=140) # Extra padding
             apply_table_font(cell, "Calibri", 11, is_bold=True)
 
@@ -200,7 +200,7 @@ if not gainers_df.empty or not losers_df.empty:
         for i, text in enumerate(cols_l):
             cell = table_l.rows[0].cells[i]
             cell.text = text
-            set_cell_background(cell, "E06666") # Coral Red
+            set_cell_background(cell, "EB5952") # Coral Red
             set_cell_padding(cell, top=140, bottom=140)
             apply_table_font(cell, "Calibri", 11, is_bold=True)
 
