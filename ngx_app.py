@@ -137,7 +137,11 @@ if not gainers_df.empty or not losers_df.empty:
 
     # 1. TOP GAINERS SECTION
     if not gainers_df.empty:
-        doc.add_heading('Top Gainers', level=1)
+        gainer_heading = doc.add_heading('Top Gainers', level=1)
+        g_run = gainer_heading.runs[0]
+        g_run.font.name = 'Calibri'
+        g_run.font.size = Pt(12)
+        g_run.font.color.rgb = RGBColor(255, 255, 255) # White
         cols = ["Gainers", "Close Price", "% Change", "Naira Change"]
         table = doc.add_table(rows=1, cols=4)
         table.style = 'Table Grid'
@@ -162,10 +166,11 @@ if not gainers_df.empty or not losers_df.empty:
 
     # 2. TOP LOSERS SECTION
     if not losers_df.empty:
-        doc.add_heading('Top Losers', level=1)
-        cols_l = ["Losers", "Close Price", "% Change", "Naira Change"]
-        table_l = doc.add_table(rows=1, cols=4)
-        table_l.style = 'Table Grid'
+        loser_heading = doc.add_heading('Top Losers', level=1)
+        l_run = loser_heading.runs[0]
+        l_run.font.name = 'Calibri'
+        l_run.font.size = Pt(12)
+        l_run.font.color.rgb = RGBColor(255, 255, 255) # White
         
         # Header Row: Calibri Bold, Red (Hex: E06666)
         hdr_cells_l = table_l.rows[0].cells
