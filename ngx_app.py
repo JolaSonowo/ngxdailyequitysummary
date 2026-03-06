@@ -93,49 +93,28 @@ if not gainers_df.empty or not losers_df.empty:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True
         )
-
 # --- WORD DOWNLOAD LOGIC ---
-from docx.shared import RGBColor, Pt
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
 
-# --- HELPERS FOR STYLING ---
-def set_cell_background(cell, fill_color):
-    shading_elm = OxmlElement('w:shd')
-    shading_elm.set(qn('w:fill'), fill_color)
-    cell._tc.get_or_add_tcPr().append(shading_elm)
-
-def apply_font_style(cell, font_name, size, is_bold=False, color=None):
-    for paragraph in cell.paragraphs:
-        for run in paragraph.runs:
-            run.font.name = font_name
-            run.font.size = Pt(size)
-            run.bold = is_bold
-            if color:
-                run.font.color.rgb = RGBColor.from_string(color)
-            # Necessary for Word to recognize the font name correctly
-            r = run._element
-            r.rPr.rFonts.set(qn('w:ascii'), font_name)
-            r.rPr.rFonts.set(qn('w:hAnsi'), font_name)
-
-# --- UPDATED WORD DOWNLOAD LOGIC ---
 from docx.shared import RGBColor, Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 # --- STYLING HELPERS ---
 def set_cell_background(cell, fill_color):
+    """Sets the background color of a table cell using Hex codes."""
     shading_elm = OxmlElement('w:shd')
     shading_elm.set(qn('w:fill'), fill_color)
     cell._tc.get_or_add_tcPr().append(shading_elm)
 
 def apply_table_font(cell, font_name, size, is_bold=False):
+    """Applies specific font, size, and forces text color to WHITE."""
     for paragraph in cell.paragraphs:
         for run in paragraph.runs:
             run.font.name = font_name
             run.font.size = Pt(size)
             run.bold = is_bold
-            # Force Word to recognize the font
+            run.font.color.rgb = RGBColor(255, 255, 255) # Force White Text
+            # Mandatory XML fix for Word to honor font names
             r = run._element
             r.rPr.rFonts.set(qn('w:ascii'), font_name)
             r.rPr.rFonts.set(qn('w:hAnsi'), font_name)
@@ -145,72 +124,75 @@ if not gainers_df.empty or not losers_df.empty:
     doc = Document()
     current_wat = get_wat_time()
     
-    # Main Doc Header: Calibri 12
+    # 1. Main Document Header: Calibri 12, Black
     title = doc.add_heading('NGX Market Summary', 0)
     title.runs[0].font.name = 'Calibri'
     title.runs[0].font.size = Pt(12)
+    title.runs[0].font.color.rgb = RGBColor(0, 0, 0)
 
-    # 1. TOP GAINERS SECTION
+    doc.add_paragraph(f"Report Date: {current_wat.strftime('%d %b %Y at %I:%M:%S %p %Z')}")
+
+    # 2. TOP GAINERS SECTION
     if not gainers_df.empty:
-        gainer_heading = doc.add_heading('Top Gainers', level=1)
-        g_run = gainer_heading.runs[0]
+        g_head = doc.add_heading('Top Gainers', level=1)
+        g_run = g_head.runs[0]
         g_run.font.name = 'Calibri'
         g_run.font.size = Pt(12)
-        g_run.font.color.rgb = RGBColor(255, 255, 255) # White
-        
+        g_run.font.color.rgb = RGBColor(255, 255, 255) # White Heading
+
         table = doc.add_table(rows=1, cols=4)
         table.style = 'Table Grid'
         
-        # Header Row: Calibri Bold 11, Green Background
+        # Header Row: Calibri Bold 11, Lighter Green
         cols = ["Gainers", "Close Price", "% Change", "Naira Change"]
         for i, text in enumerate(cols):
             cell = table.rows[0].cells[i]
             cell.text = text
-            set_cell_background(cell, "548235") # Darker green like image 2
+            set_cell_background(cell, "93C47D") # Muted Green from image
             apply_table_font(cell, "Calibri", 11, is_bold=True)
 
-        # Body Rows: Aptos 11, Green Background
+        # Body Rows: Aptos 11, Lighter Green
         for _, row in gainers_df.iterrows():
             row_cells = table.add_row().cells
             vals = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
             for i, val in enumerate(vals):
                 row_cells[i].text = str(val)
-                set_cell_background(row_cells[i], "548235")
+                set_cell_background(row_cells[i], "93C47D")
                 apply_table_font(row_cells[i], "Aptos", 11)
 
     doc.add_paragraph("\n") 
 
-    # 2. TOP LOSERS SECTION
+    # 3. TOP LOSERS SECTION
     if not losers_df.empty:
-        loser_heading = doc.add_heading('Top Losers', level=1)
-        l_run = loser_heading.runs[0]
+        l_head = doc.add_heading('Top Losers', level=1)
+        l_run = l_head.runs[0]
         l_run.font.name = 'Calibri'
         l_run.font.size = Pt(12)
-        l_run.font.color.rgb = RGBColor(255, 255, 255) # White
+        l_run.font.color.rgb = RGBColor(255, 255, 255) # White Heading
         
         table_l = doc.add_table(rows=1, cols=4)
         table_l.style = 'Table Grid'
         
-        # Header Row: Calibri Bold 11, Red Background
+        # Header Row: Calibri Bold 11, Lighter Red
         cols_l = ["Losers", "Close Price", "% Change", "Naira Change"]
         for i, text in enumerate(cols_l):
             cell = table_l.rows[0].cells[i]
             cell.text = text
-            set_cell_background(cell, "843C39") # Darker red like image 2
+            set_cell_background(cell, "E06666") # Coral Red from image
             apply_table_font(cell, "Calibri", 11, is_bold=True)
 
-        # Body Rows: Aptos 11, Red Background
+        # Body Rows: Aptos 11, Lighter Red
         for _, row in losers_df.iterrows():
             row_cells = table_l.add_row().cells
             vals = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
             for i, val in enumerate(vals):
                 row_cells[i].text = str(val)
-                set_cell_background(row_cells[i], "843C39")
+                set_cell_background(row_cells[i], "E06666")
                 apply_table_font(row_cells[i], "Aptos", 11)
-                
- word_bio = io.BytesIO()
+
+    # Save and Export
+    word_bio = io.BytesIO()
     doc.save(word_bio)
-    
     with btn_col2:
         st.download_button(
             label="Download Word Report",
