@@ -99,73 +99,93 @@ from docx.shared import RGBColor, Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-# Helper function to set cell background color
+# --- HELPERS FOR STYLING ---
 def set_cell_background(cell, fill_color):
     shading_elm = OxmlElement('w:shd')
     shading_elm.set(qn('w:fill'), fill_color)
     cell._tc.get_or_add_tcPr().append(shading_elm)
+
+def apply_font_style(cell, font_name, size, is_bold=False, color=None):
+    for paragraph in cell.paragraphs:
+        for run in paragraph.runs:
+            run.font.name = font_name
+            run.font.size = Pt(size)
+            run.bold = is_bold
+            if color:
+                run.font.color.rgb = RGBColor.from_string(color)
+            # Necessary for Word to recognize the font name correctly
+            r = run._element
+            r.rPr.rFonts.set(qn('w:ascii'), font_name)
+            r.rPr.rFonts.set(qn('w:hAnsi'), font_name)
 
 # --- UPDATED WORD DOWNLOAD LOGIC ---
 if not gainers_df.empty or not losers_df.empty:
     doc = Document()
     current_wat = get_wat_time()
     
-    # 1. Custom Header
-    doc.add_heading('NGX Market Summary', 0)
-    doc.add_paragraph(f"Report Date: {current_wat.strftime('%d %b %Y at %I:%M:%S %p')} WAT")
+    # Header of the doc: Calibri, Point size 12
+    title = doc.add_heading('NGX Market Summary', 0)
+    title_run = title.runs[0]
+    title_run.font.name = 'Calibri'
+    title_run.font.size = Pt(12)
+    title_run.font.color.rgb = RGBColor(0, 0, 0) # Black
 
-    # 2. GAINERS SECTION (Green)
+    date_para = doc.add_paragraph(f"Report Date: {current_wat.strftime('%d %b %Y at %I:%M:%S %p')} WAT")
+    date_run = date_para.runs[0]
+    date_run.font.name = 'Calibri'
+    date_run.font.size = Pt(12)
+
+    # 1. TOP GAINERS SECTION
     if not gainers_df.empty:
         doc.add_heading('Top Gainers', level=1)
-        # Match image columns: Symbol, Close Price, % Change, Naira Change
         cols = ["Gainers", "Close Price", "% Change", "Naira Change"]
         table = doc.add_table(rows=1, cols=4)
         table.style = 'Table Grid'
         
-        # Format Header Row (Green)
+        # Header Row: Calibri Bold, Green (Hex: 93C47D)
         hdr_cells = table.rows[0].cells
         for i, text in enumerate(cols):
             hdr_cells[i].text = text
-            set_cell_background(hdr_cells[i], "93C47D") # Light Green
-            hdr_cells[i].paragraphs[0].runs[0].bold = True
+            set_cell_background(hdr_cells[i], "93C47D") 
+            apply_font_style(hdr_cells[i], "Calibri", 11, is_bold=True)
 
-        # Add Data Rows (Light Green)
+        # Body Rows: Aptos, Size 11
         for _, row in gainers_df.iterrows():
             row_cells = table.add_row().cells
-            # Map dataframe values to specific columns
-            values = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
-            for i, val in enumerate(values):
+            vals = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
+            for i, val in enumerate(vals):
                 row_cells[i].text = str(val)
-                set_cell_background(row_cells[i], "A9D08E") # Slightly lighter green
+                set_cell_background(row_cells[i], "93C47D") # Same green as head
+                apply_font_style(row_cells[i], "Aptos", 11)
 
-    doc.add_paragraph("\n") # Spacer
+    doc.add_paragraph("\n") 
 
-    # 3. LOSERS SECTION (Red)
+    # 2. TOP LOSERS SECTION
     if not losers_df.empty:
         doc.add_heading('Top Losers', level=1)
         cols_l = ["Losers", "Close Price", "% Change", "Naira Change"]
         table_l = doc.add_table(rows=1, cols=4)
         table_l.style = 'Table Grid'
         
-        # Format Header Row (Red)
+        # Header Row: Calibri Bold, Red (Hex: E06666)
         hdr_cells_l = table_l.rows[0].cells
         for i, text in enumerate(cols_l):
             hdr_cells_l[i].text = text
-            set_cell_background(hdr_cells_l[i], "E06666") # Muted Red
-            hdr_cells_l[i].paragraphs[0].runs[0].bold = True
+            set_cell_background(hdr_cells_l[i], "E06666")
+            apply_font_style(hdr_cells_l[i], "Calibri", 11, is_bold=True)
 
-        # Add Data Rows (Light Red)
+        # Body Rows: Aptos, Size 11
         for _, row in losers_df.iterrows():
             row_cells = table_l.add_row().cells
-            values = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
-            for i, val in enumerate(values):
+            vals = [row['Symbol'], f"{row['Price']:.2f}", f"{row['% Change']:.2f}", f"{row['Change (N)']:.2f}"]
+            for i, val in enumerate(vals):
                 row_cells[i].text = str(val)
-                set_cell_background(row_cells[i], "F4CCCC") # Light Pink/Red
+                set_cell_background(row_cells[i], "E06666") # Same red as head
+                apply_font_style(row_cells[i], "Aptos", 11)
 
-    # Save to buffer
+    # Save and Streamlit Download Button
     word_bio = io.BytesIO()
     doc.save(word_bio)
-    
     with btn_col2:
         st.download_button(
             label="Download Word Report",
@@ -174,7 +194,6 @@ if not gainers_df.empty or not losers_df.empty:
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True
         )
-
 # 6. LIVE CLOCK 
 while True:
     now = get_wat_time()
