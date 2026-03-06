@@ -113,7 +113,7 @@ if not gainers_final.empty or not losers_final.empty:
         st.download_button("Download Excel", excel_bio.getvalue(), "NGX_7.xlsx", use_container_width=True)
     with btn_col2:
         st.download_button("Download Word", word_bio.getvalue(), "NGX_7.docx", use_container_width=True)            
-            output.append({
+        output.append({
                 "Symbol": item.get('SYMBOL', 'N/A'),
                 "Price": todays_close,
                 "Change (N)": price_change,
