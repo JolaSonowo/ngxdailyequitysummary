@@ -55,14 +55,14 @@ gainers_df = get_ngx_api_data("topsymbols")
 losers_df = get_ngx_api_data("bottomsymbols")
 
 with col1:
-    st.success("**Top 7 Advancers**")
+    st.success("**Top 5 Advancers**")
     if not gainers_df.empty:
         st.dataframe(gainers_df, use_container_width=True, hide_index=True)
     else:
         st.warning("No gainers data available currently.")
 
 with col2:
-    st.error("**Top 7 Decliners**")
+    st.error("**Top 5 Decliners**")
     if not losers_df.empty:
         st.dataframe(losers_df, use_container_width=True, hide_index=True)
     else:
